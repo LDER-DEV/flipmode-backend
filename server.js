@@ -13,6 +13,14 @@ app.use(cors({
   methods: 'GET,POST',
 }));
 
+// Sanitize title for filename
+function sanitizeTitle(title) {
+  return title
+    .replace(/[<>:"/\\|?*]/g, '') // Remove invalid characters
+    .trim()
+    .replace(/\s+/g, '_'); // Replace spaces with underscores
+}
+
 // Start the server
 const PORT = process.env.PORT || 10000;
 app.listen(PORT, () => {
@@ -29,14 +37,18 @@ app.get('/api/download', async (req, res) => {
 
   try {
     const info = await ytdl.getInfo(url);
-    const sampleTitle = info.videoDetails.title || 'sample';
+    const sampleTitle = sanitizeTitle(info.videoDetails.title || 'sample'); // Sanitize title
+
+    // Encode the filename for non-ASCII characters
+    const encodedTitle = encodeURIComponent(sampleTitle);
 
     // Set headers for streaming audio directly to the client
-    res.setHeader('Content-Disposition', `attachment; filename="${sampleTitle}.mp3"`);
+    res.setHeader('Content-Disposition', `attachment; filename="${encodedTitle}.mp3"`);
     res.setHeader('Content-Type', 'audio/mpeg');
 
     // Stream the audio directly to the response
     const audioStream = ytdl(url, { filter: 'audioonly' });
+    
     audioStream.pipe(res);
 
     audioStream.on('error', (error) => {
@@ -44,7 +56,7 @@ app.get('/api/download', async (req, res) => {
       res.status(500).send({ error: 'Failed to stream audio' });
     });
   } catch (error) {
-    console.error('Error:', error);
+    console.error('Error fetching audio info:', error); // More informative logging
     res.status(500).send({ error: error.message || 'An error occurred' });
   }
 });
