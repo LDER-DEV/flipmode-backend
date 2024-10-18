@@ -1,17 +1,27 @@
 import express from 'express';
 import ytdl from '@distube/ytdl-core';
 import cors from 'cors';
-import ffmpeg from 'fluent-ffmpeg';  // Install with `npm install fluent-ffmpeg`
 import dotenv from 'dotenv';
+import ffmpeg from 'fluent-ffmpeg';
+import ffmpegStatic from 'ffmpeg-static';
 
 dotenv.config();
 
+// Set the path for ffmpeg
+ffmpeg.setFfmpegPath(ffmpegStatic);
+
 const app = express();
 
+// CORS configuration
 app.use(cors({
   origin: process.env.ORIGIN || 'http://localhost:5173',
   methods: 'GET,POST',
 }));
+
+// Sanitize title for filename
+function sanitizeTitle(title) {
+  return title.replace(/[<>:"/\\|?*]/g, '').trim().replace(/\s+/g, '_');
+}
 
 const PORT = process.env.PORT || 10000;
 app.listen(PORT, () => {
@@ -27,18 +37,16 @@ app.get('/api/download', async (req, res) => {
 
   try {
     const info = await ytdl.getInfo(url);
-    const sampleTitle = info.videoDetails.title || 'sample';
+    const sampleTitle = sanitizeTitle(info.videoDetails.title || 'sample');
+    const encodedTitle = encodeURIComponent(sampleTitle);
 
-    const sanitizedTitle = encodeURIComponent(sampleTitle.replace(/[<>:"/\\|?*]/g, '').trim());
-
-    res.setHeader('Content-Disposition', `attachment; filename="${sanitizedTitle}.mp3"`);
+    res.setHeader('Content-Disposition', `attachment; filename="${encodedTitle}.mp3"`);
     res.setHeader('Content-Type', 'audio/mpeg');
 
-    // Use FFmpeg to convert the stream to MP3 format
     const audioStream = ytdl(url, { filter: 'audioonly' });
 
     ffmpeg(audioStream)
-      .audioBitrate(128) // You can adjust the bitrate if needed
+      .audioBitrate(128)
       .toFormat('mp3')
       .on('error', (err) => {
         console.error('FFmpeg error:', err);
