@@ -1,33 +1,23 @@
 import express from 'express';
 import ytdl from '@distube/ytdl-core';
 import cors from 'cors';
+import ffmpeg from 'fluent-ffmpeg';  // Install with `npm install fluent-ffmpeg`
 import dotenv from 'dotenv';
 
 dotenv.config();
 
 const app = express();
 
-// CORS configuration
 app.use(cors({
   origin: process.env.ORIGIN || 'http://localhost:5173',
   methods: 'GET,POST',
 }));
 
-// Sanitize title for filename
-function sanitizeTitle(title) {
-  return title
-    .replace(/[<>:"/\\|?*]/g, '') // Remove invalid characters
-    .trim()
-    .replace(/\s+/g, '_'); // Replace spaces with underscores
-}
-
-// Start the server
 const PORT = process.env.PORT || 10000;
 app.listen(PORT, () => {
   console.log(`Server listening on port ${PORT}`);
 });
 
-// Your API route for downloading audio
 app.get('/api/download', async (req, res) => {
   const url = req.query.url;
 
@@ -37,26 +27,27 @@ app.get('/api/download', async (req, res) => {
 
   try {
     const info = await ytdl.getInfo(url);
-    const sampleTitle = sanitizeTitle(info.videoDetails.title || 'sample'); // Sanitize title
+    const sampleTitle = info.videoDetails.title || 'sample';
 
-    // Encode the filename for non-ASCII characters
-    const encodedTitle = encodeURIComponent(sampleTitle);
+    const sanitizedTitle = encodeURIComponent(sampleTitle.replace(/[<>:"/\\|?*]/g, '').trim());
 
-    // Set headers for streaming audio directly to the client
-    res.setHeader('Content-Disposition', `attachment; filename="${encodedTitle}.mp3"`);
+    res.setHeader('Content-Disposition', `attachment; filename="${sanitizedTitle}.mp3"`);
     res.setHeader('Content-Type', 'audio/mpeg');
 
-    // Stream the audio directly to the response
+    // Use FFmpeg to convert the stream to MP3 format
     const audioStream = ytdl(url, { filter: 'audioonly' });
-    
-    audioStream.pipe(res);
 
-    audioStream.on('error', (error) => {
-      console.error('Error streaming audio:', error);
-      res.status(500).send({ error: 'Failed to stream audio' });
-    });
+    ffmpeg(audioStream)
+      .audioBitrate(128) // You can adjust the bitrate if needed
+      .toFormat('mp3')
+      .on('error', (err) => {
+        console.error('FFmpeg error:', err);
+        res.status(500).send({ error: 'Error converting audio' });
+      })
+      .pipe(res, { end: true });
+
   } catch (error) {
-    console.error('Error fetching audio info:', error); // More informative logging
+    console.error('Error:', error);
     res.status(500).send({ error: error.message || 'An error occurred' });
   }
 });
