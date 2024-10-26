@@ -49,7 +49,7 @@ app.get('/api/download', async (req, res) => {
     const audioStream = ytdl(url, { filter: 'audioonly' });
 
     ffmpeg(audioStream)
-      .audioBitrate(128)
+      .audioBitrate(320)
       .toFormat('mp3')
       .on('error', (err) => {
         console.error('FFmpeg error:', err);
