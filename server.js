@@ -48,6 +48,7 @@ app.get('/api/download', async (req, res) => {
 
     res.setHeader('Content-Disposition', `attachment; filename="${encodedTitle}.mp3"`);
     res.setHeader('Content-Type', 'audio/mpeg');
+    res.setHeader('X-Video-Title', sampleTitle); // Custom header
 
     const audioStream = ytdl(url, { filter: 'audioonly' });
 
@@ -59,7 +60,6 @@ app.get('/api/download', async (req, res) => {
         res.status(500).send({ error: 'Error converting audio' });
       })
       .pipe(res, { end: true });
-
   } catch (error) {
     console.error('Error:', error);
     res.status(500).send({ error: error.message || 'An error occurred' });
