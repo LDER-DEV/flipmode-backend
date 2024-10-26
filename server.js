@@ -2,11 +2,14 @@ import express from 'express';
 import ytdl from '@distube/ytdl-core';
 import cors from 'cors';
 import dotenv from 'dotenv';
+dotenv.config({ path: './process.env' });
+import connectDB from './config/connectDB.js';
 import ffmpeg from 'fluent-ffmpeg';
 import ffmpegStatic from 'ffmpeg-static';
 
-dotenv.config();
 
+//connecting mongo database
+connectDB()
 // Set the path for ffmpeg
 ffmpeg.setFfmpegPath(ffmpegStatic);
 
@@ -23,9 +26,9 @@ function sanitizeTitle(title) {
   return title.replace(/[<>:"/\\|?*]/g, '').trim().replace(/\s+/g, '_');
 }
 
-const PORT = process.env.PORT || 10000;
-app.listen(PORT, () => {
-  console.log(`Server listening on port ${PORT}`);
+const port = process.env.PORT ;
+app.listen(port, () => {
+  console.log(`Server listening on port ${port}`);
 });
 
 app.get('/api/download', async (req, res) => {
