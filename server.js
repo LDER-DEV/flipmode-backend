@@ -17,10 +17,13 @@ const app = express();
 
 // CORS configuration
 app.use(cors({
-  origin: process.env.ORIGIN || 'http://localhost:5173',
+  origin: [
+    process.env.ORIGIN || 'http://localhost:5173',
+    'https://flipmode.netlify.app',
+    'chrome-extension://odjdjjickoaedmbimdhbbngaimdghfcj'
+  ],
   methods: 'GET,POST',
 }));
-
 // Sanitize title for filename
 function sanitizeTitle(title) {
   return title.replace(/[<>:"/\\|?*]/g, '').trim().replace(/\s+/g, '_');
