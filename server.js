@@ -50,6 +50,9 @@ app.get('/api/download', async (req, res) => {
     res.setHeader('Content-Type', 'audio/mpeg');
     res.setHeader('X-Video-Title', sampleTitle); // Custom header
 
+    // Expose the custom header to the frontend
+    res.setHeader('Access-Control-Expose-Headers', 'X-Video-Title, Content-Disposition, Content-Type');
+
     const audioStream = ytdl(url, { filter: 'audioonly' });
 
     ffmpeg(audioStream)
