@@ -48,7 +48,7 @@ app.get('/api/download', async (req, res) => {
 
     res.setHeader('Content-Disposition', `attachment; filename="${encodedTitle}.mp3"`);
     res.setHeader('Content-Type', 'audio/mpeg');
-    res.setHeader('X-Video-Title', sampleTitle); // Custom header
+    res.setHeader('X-Video-Title', encodedTitle); // Use encoded title here
 
     // Expose the custom header to the frontend
     res.setHeader('Access-Control-Expose-Headers', 'X-Video-Title, Content-Disposition, Content-Type');
