@@ -20,7 +20,7 @@ app.use(cors({
   origin: [
     process.env.ORIGIN || 'http://localhost:5173',
     'https://flipmode.netlify.app',
-    'chrome-extension://igehpdfdahifdcdnpaiomdfhofddjhie'
+    process.env.CHROME
   ],
   methods: 'GET,POST',
 }));
