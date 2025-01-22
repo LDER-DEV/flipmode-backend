@@ -1,8 +1,9 @@
-const fs = require('fs');
-const fsPromise = require('fs/promises');
-const { Readable } = require('stream');
-const { finished } = require('stream/promises');
+import fs from 'fs';
+import { Readable } from 'stream';
+import { finished } from 'stream/promises';
+import fsPromise from 'fs/promises';
 
+// Patch function
 const patchYTDL = async () => {
   const patchFile = async (file, patchUrl) => {
     const stream = fs.createWriteStream(file);
@@ -42,6 +43,12 @@ const patchYTDL = async () => {
   console.log('Applied hotfixes for DisTubeError "FFmpeg exited with code 1" or 403 Errors.');
 };
 
-patchYTDL().catch((error) => {
-  console.error('Error applying YTDL hotfixes:', error);
-});
+// Export the patch function using ES module syntax
+export default patchYTDL;
+
+// Automatically run if the script is executed directly
+if (import.meta.url === `file://${process.argv[1]}`) {
+  patchYTDL().catch((error) => {
+    console.error('Error applying YTDL hotfixes:', error);
+  });
+}
