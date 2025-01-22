@@ -42,18 +42,28 @@ app.get('/api/download', async (req, res) => {
   }
 
   try {
-    const info = await ytdl.getInfo(url);
+    const info = await ytdl.getInfo(url, {
+      requestOptions: {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36',
+          'Accept-Language': 'en-US,en;q=0.9',
+        },
+      },
+    });
+
     const sampleTitle = sanitizeTitle(info.videoDetails.title || 'sample');
     const encodedTitle = encodeURIComponent(sampleTitle);
 
     res.setHeader('Content-Disposition', `attachment; filename="${encodedTitle}.mp3"`);
     res.setHeader('Content-Type', 'audio/mpeg');
-    res.setHeader('X-Video-Title', encodedTitle); // Use encoded title here
-
-    // Expose the custom header to the frontend
+    res.setHeader('X-Video-Title', encodedTitle);
     res.setHeader('Access-Control-Expose-Headers', 'X-Video-Title, Content-Disposition, Content-Type');
 
     const audioStream = ytdl(url, { filter: 'audioonly' });
+    audioStream.on('error', (err) => {
+      console.error('YouTube Stream Error:', err);
+      res.status(500).send({ error: 'Failed to retrieve audio stream' });
+    });
 
     ffmpeg(audioStream)
       .audioBitrate(320)
@@ -64,7 +74,10 @@ app.get('/api/download', async (req, res) => {
       })
       .pipe(res, { end: true });
   } catch (error) {
-    console.error('Error:', error);
-    res.status(500).send({ error: error.message || 'An error occurred' });
+    console.error('Error occurred:', {
+      message: error.message,
+      stack: error.stack,
+    });
+    res.status(500).send({ error: error.message || 'An unknown error occurred' });
   }
 });
