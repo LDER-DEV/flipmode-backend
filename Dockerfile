@@ -1,11 +1,5 @@
-# Use Node.js base image
-FROM node:18-slim
-
-# Install FFmpeg and other dependencies
-RUN apt-get update && \
-    apt-get install -y ffmpeg && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
+# Use a base image that includes Node.js and FFmpeg
+FROM tiangolo/node-ffmpeg:18
 
 # Create and set the app directory
 WORKDIR /app
