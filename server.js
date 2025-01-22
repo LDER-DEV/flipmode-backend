@@ -37,34 +37,43 @@ app.listen(port, () => {
 app.get('/api/download', async (req, res) => {
   const url = req.query.url;
 
-  if (!url) {
-    return res.status(400).send({ error: 'No URL provided' });
+  if (!url || !ytdl.validateURL(url)) {
+    return res.status(400).send({ error: 'Invalid or missing YouTube URL' });
   }
 
   try {
+    console.log('Processing request for URL:', url);
     const info = await ytdl.getInfo(url);
     const sampleTitle = sanitizeTitle(info.videoDetails.title || 'sample');
     const encodedTitle = encodeURIComponent(sampleTitle);
 
     res.setHeader('Content-Disposition', `attachment; filename="${encodedTitle}.mp3"`);
     res.setHeader('Content-Type', 'audio/mpeg');
-    res.setHeader('X-Video-Title', encodedTitle); // Use encoded title here
-
-    // Expose the custom header to the frontend
+    res.setHeader('X-Video-Title', encodedTitle);
     res.setHeader('Access-Control-Expose-Headers', 'X-Video-Title, Content-Disposition, Content-Type');
 
     const audioStream = ytdl(url, { filter: 'audioonly' });
+    audioStream.on('error', (streamErr) => {
+      console.error('Audio stream error:', streamErr);
+      res.status(500).send({ error: 'Error streaming audio' });
+    });
 
     ffmpeg(audioStream)
       .audioBitrate(320)
       .toFormat('mp3')
+      .on('start', (commandLine) => {
+        console.log('FFmpeg started with command:', commandLine);
+      })
       .on('error', (err) => {
         console.error('FFmpeg error:', err);
         res.status(500).send({ error: 'Error converting audio' });
       })
+      .on('end', () => {
+        console.log('FFmpeg processing finished successfully.');
+      })
       .pipe(res, { end: true });
   } catch (error) {
-    console.error('Error:', error);
-    res.status(500).send({ error: error.message || 'An error occurred' });
+    console.error('Server error:', error.stack || error);
+    res.status(500).send({ error: 'An unexpected error occurred' });
   }
 });
