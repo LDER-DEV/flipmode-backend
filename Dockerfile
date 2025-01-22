@@ -1,8 +1,8 @@
 # Use Node.js base image
 FROM node:18
 
-# Install FFmpeg
-RUN apt-get update && apt-get install -y ffmpeg
+# Use a Node.js base image with FFmpeg pre-installed
+FROM jrottenberg/ffmpeg:4.4-node18-slim as base
 
 # Create and set the app directory
 WORKDIR /app
@@ -17,7 +17,7 @@ RUN npm install
 COPY . .
 
 # Expose the port
-EXPOSE 3000
+EXPOSE 9900
 
 # Start the application
 CMD ["npm", "start"]
