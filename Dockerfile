@@ -1,12 +1,3 @@
-
-Yes, if your project is structured such that the bin folder is inside the flipmode-backend directory, then the Dockerfile should reflect that. In this case, /app would be replaced with /flipmode-backend in the WORKDIR and COPY commands.
-
-Here’s how your updated Dockerfile might look:
-
-Updated Dockerfile (Option 2)
-dockerfile
-Copy
-Edit
 FROM node:18-slim
 
 # Set the working directory to /flipmode-backend
